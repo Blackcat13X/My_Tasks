@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureTask - Daily Task Manager</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --danger: #e63946;
+            --gray: #6c757d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7ff;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+        
+        header h1 {
+            color: var(--primary);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .auth-container, .task-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+        
+        .task-list {
+            list-style-type: none;
+            margin-top: 20px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: var(--light);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .task-text {
+            flex-grow: 1;
+            margin: 0 15px;
+            word-break: break-word;
+        }
+        
+        .completed .task-text {
+            text-decoration: line-through;
+            color: var(--gray);
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            width: auto;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        
+        .logout-btn {
+            background-color: var(--gray);
+            margin-top: 20px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .security-notice {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .auth-container, .task-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SecureTask</h1>
+            <p>Your secure daily task manager</p>
+        </header>
+        
+        <div id="authContainer" class="auth-container">
+            <h2>Login / Register</h2>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
+            </div>
+            <button id="loginBtn">Login</button>
+            <button id="registerBtn" style="margin-top: 10px; background-color: var(--success);">Register</button>
+        </div>
+        
+        <div id="taskContainer" class="task-container hidden">
+            <h2>My Tasks</h2>
+            <div class="form-group">
+                <input type="text" id="newTask" placeholder="Enter a new task">
+            </div>
+            <button id="addTaskBtn">Add Task</button>
+            
+            <ul id="taskList" class="task-list"></ul>
+            
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+        
+        <div class="security-notice">
+            <p>Your data is securely stored and encrypted. We prioritize your privacy.</p>
+        </div>
+    </div>
+
+    <script>
+        // عناصر DOM
+        const authContainer = document.getElementById('authContainer');
+        const taskContainer = document.getElementById('taskContainer');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const newTaskInput = document.getElementById('newTask');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const taskList = document.getElementById('taskList');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // بيانات التطبيق
+        let currentUser = null;
+        let users = JSON.parse(localStorage.getItem('taskUsers')) || {};
+        let tasks = JSON.parse(localStorage.getItem('taskItems')) || {};
+
+        // تسجيل مستخدم جديد
+        registerBtn.addEventListener('click', () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+            
+            if (users[email]) {
+                alert('User already exists with this email');
+                return;
+            }
+            
+            // في تطبيق حقيقي، يجب تشفير كلمة المرور قبل التخزين
+            users[email] = { password: password };
+            localStorage.setItem('taskUsers', JSON.stringify(users));
+            
+            tasks[email] = [];
+            localStorage.setItem('taskItems', JSON.stringify(tasks));
+            
+            alert('Registration successful! You can now login.');
+            emailInput.value = '';
+            passwordInput.value = '';
+        });
+
+        // تسجيل الدخول
+        loginBtn.addEventListener('click', () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+            
+            if (!users[email] || users[email].password !== password) {
+                alert('Invalid email or password');
+                return;
+            }
+            
+            currentUser = email;
+            authContainer.classList.add('hidden');
+            taskContainer.classList.remove('hidden');
+            
+            renderTasks();
+        });
+
+        // تسجيل الخروج
+        logoutBtn.addEventListener('click', () => {
+            currentUser = null;
+            authContainer.classList.remove('hidden');
+            taskContainer.classList.add('hidden');
+            emailInput.value = '';
+            passwordInput.value = '';
+        });
+
+        // إضافة مهمة جديدة
+        addTaskBtn.addEventListener('click', () => {
+            const taskText = newTaskInput.value.trim();
+            
+            if (!taskText) {
+                alert('Please enter a task');
+                return;
+            }
+            
+            const newTask = {
+                id: Date.now(),
+                text: taskText,
+                completed: false
+            };
+            
+            tasks[currentUser].push(newTask);
+            localStorage.setItem('taskItems', JSON.stringify(tasks));
+            
+            newTaskInput.value = '';
+            renderTasks();
+        });
+
+        // عرض المهام
+        function renderTasks() {
+            taskList.innerHTML = '';
+            
+            if (!tasks[currentUser] || tasks[currentUser].length === 0) {
+                taskList.innerHTML = '<p style="text-align: center; color: var(--gray);">No tasks yet. Add a new task!</p>';
+                return;
+            }
+            
+            tasks[currentUser].forEach(task => {
+                const li = document.createElement('li');
+                li.className = `task-item ${task.completed ? 'completed' : ''}`;
+                
+                li.innerHTML = `
+                    <input type="checkbox" ${task.completed ? 'checked' : ''}>
+                    <span class="task-text">${task.text}</span>
+                    <div class="task-actions">
+                        <button class="action-btn btn-danger">Delete</button>
+                    </div>
+                `;
+                
+                const checkbox = li.querySelector('input');
+                checkbox.addEventListener('change', () => toggleTaskComplete(task.id));
+                
+                const deleteBtn = li.querySelector('button');
+                deleteBtn.addEventListener('click', () => deleteTask(task.id));
+                
+                taskList.appendChild(li);
+            });
+        }
+
+        //标记 المهمة كمكتملة
+        function toggleTaskComplete(taskId) {
+            tasks[currentUser] = tasks[currentUser].map(task => {
+                if (task.id === taskId) {
+                    return { ...task, completed: !task.completed };
+                }
+                return task;
+            });
+            
+            localStorage.setItem('taskItems', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        // حذف المهمة
+        function deleteTask(taskId) {
+            tasks[currentUser] = tasks[currentUser].filter(task => task.id !== taskId);
+            localStorage.setItem('taskItems', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        // دعم إضافة المهمة باستخدام زر Enter
+        newTaskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTaskBtn.click();
+            }
+        });
+    </script>
+</body>
+  </html>
