@@ -665,6 +665,10 @@ function showNotification(message, type) {
         renderTasks();
     }
 });
+        // تذكرني تلقائياً
+if (localStorage.getItem('currentUser')) {
+    loginBtn.click();
+        }
     </script>
 </body>
     </html>
