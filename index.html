@@ -520,29 +520,34 @@ function showNotification(message, type) {
 
         // Login
         loginBtn.addEventListener('click', () => {
-            const email = emailInput.value.trim();
-            const password = passwordInput.value.trim();
-            userStats.classList.remove('hidden');
-             initUserStats(email);
-            if (!email || !password) {
-                alert('Please enter both email and password');
-                return;
-            }
-            
-            if (!users[email] || users[email].password !== password) {
-                alert('Invalid email or password');
-                return;
-            }
-            
-            currentUser = email;
-            authContainer.classList.add('hidden');
-            taskContainer.classList.remove('hidden');
-            useStats.classlist.remove('hidden');
-            initUserStats(email);
-            console.log('Login successful - Showing task container');
-            
-            renderTasks();
-        });
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    
+    if (!email || !password) {
+        alert('Please enter both email and password');
+        return;
+    }
+    
+    if (!users[email] || users[email].password !== password) {
+        alert('Invalid email or password');
+        return;
+    }
+    
+    currentUser = email;
+    
+    // إخفاء قسم التسجيل
+    authContainer.classList.add('hidden');
+    
+    // إظهار قسم المهام والإحصائيات
+    taskContainer.classList.remove('hidden');
+    userStats.classList.remove('hidden');
+    
+    // تهيئة الإحصائيات
+    initUserStats(email);
+    
+    // عرض المهام
+    renderTasks();
+});
 
         // Logout
         logoutBtn.addEventListener('click', () => {
