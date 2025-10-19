@@ -13,6 +13,10 @@
             --dark: #2c3e50;
             --danger: #c0392b;
             --gray: #95a5a6;
+            --xp-easy: #2ecc71;
+            --xp-medium: #f39c12;
+            --xp-hard: #e74c3c;
+            --xp-expert: #9b59b6;
         }
         
         * {
@@ -42,6 +46,49 @@
         }
         
         header {
+            .user-stats {
+    background: rgba(44, 62, 80, 0.9);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.xp-bar {
+    background: var(--gray);
+    border-radius: 10px;
+    height: 20px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.xp-progress {
+    background: linear-gradient(90deg, var(--xp-easy), var(--xp-expert));
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+.stats-info {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--light);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--gray);
+}
             text-align: center;
             margin-bottom: 30px;
             padding: 20px 0;
@@ -218,7 +265,49 @@
             margin-right: 15px;
             flex-shrink: 0;
         }
-        
+        .task-content {
+    flex-grow: 1;
+    margin: 0 15px;
+}
+
+.task-text {
+    word-break: break-word;
+    margin-bottom: 5px;
+}
+
+.task-difficulty {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.difficulty-easy { background: var(--xp-easy); color: white; }
+.difficulty-medium { background: var(--xp-medium); color: white; }
+.difficulty-hard { background: var(--xp-hard); color: white; }
+.difficulty-expert { background: var(--xp-expert); color: white; }
+
+.xp-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--success);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    animation: slideIn 0.5s, slideOut 0.5s 2s forwards;
+    z-index: 1000;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); }
+    to { transform: translateX(100%); }
+}
         @media (max-width: 600px) {
             .container {
                 padding: 15px;
@@ -240,7 +329,26 @@
             <h1>TaskMaster</h1>
             <p>Your secure daily task manager</p>
         </header>
-        
+<div id="userStats" class="user-stats hidden">
+    <h3>Your Progress</h3>
+    <div class="xp-bar">
+        <div class="xp-progress" id="xpProgress"></div>
+    </div>
+    <div class="stats-info">
+        <div class="stat-item">
+            <div class="stat-value" id="currentLevel">1</div>
+            <div class="stat-label">Level</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="currentXP">0</div>
+            <div class="stat-label">XP</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="tasksCompleted">0</div>
+            <div class="stat-label">Tasks Done</div>
+        </div>
+    </div>
+</div>
         <div id="authContainer" class="auth-container">
             <h2>Login / Register</h2>
             <div class="form-group">
@@ -258,7 +366,13 @@
         <div id="taskContainer" class="task-container hidden">
             <h2>My Tasks</h2>
             <div class="form-group">
-                <input type="text" id="newTask" placeholder="Enter a new task">
+    <input type="text" id="newTask" placeholder="Enter a new task">
+    <select id="taskDifficulty" style="margin-top: 10px;">
+        <option value="easy">Easy (+20 XP)</option>
+        <option value="medium">Medium (+50 XP)</option>
+        <option value="hard">Hard (+100 XP)</option>
+        <option value="expert">Expert (+200 XP)</option>
+    </select>
             </div>
             <button id="addTaskBtn">Add Task</button>
             
@@ -300,14 +414,83 @@
         const registerBtn = document.getElementById('registerBtn');
         const newTaskInput = document.getElementById('newTask');
         const addTaskBtn = document.getElementById('addTaskBtn');
+        const difficulty = taskDifficulty.value;
         const taskList = document.getElementById('taskList');
         const logoutBtn = document.getElementById('logoutBtn');
+        // Initialize user stats
+function initUserStats(email) {
+    if (!userStatsData[email]) {
+        userStatsData[email] = {
+            xp: 0,
+            level: 1,
+            tasksCompleted: 0
+        };
+        localStorage.setItem('userStats', JSON.stringify(userStatsData));
+    }
+    updateStatsDisplay();
+}
 
+// Update stats display
+function updateStatsDisplay() {
+    const stats = userStatsData[currentUser];
+    const xpInLevel = stats.xp % LEVEL_XP;
+    const progressPercent = (xpInLevel / LEVEL_XP) * 100;
+    
+    xpProgress.style.width = `${progressPercent}%`;
+    currentLevel.textContent = stats.level;
+    currentXP.textContent = stats.xp;
+    tasksCompleted.textContent = stats.tasksCompleted;
+}
+
+// Add XP
+function addXP(difficulty) {
+    const xpGained = XP_VALUES[difficulty];
+    userStatsData[currentUser].xp += xpGained;
+    userStatsData[currentUser].tasksCompleted += 1;
+    
+    // Check level up
+    const oldLevel = userStatsData[currentUser].level;
+    const newLevel = Math.floor(userStatsData[currentUser].xp / LEVEL_XP) + 1;
+    
+    if (newLevel > oldLevel) {
+        userStatsData[currentUser].level = newLevel;
+        showNotification(`🎉 Level Up! You reached level ${newLevel}`, 'success');
+    } else {
+        showNotification(`+${xpGained} XP!`, 'xp');
+    }
+    
+    localStorage.setItem('userStats', JSON.stringify(userStatsData));
+    updateStatsDisplay();
+}
+
+// Show notification
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = 'xp-notification';
+    notification.textContent = message;
+    notification.style.background = type === 'success' ? '#27ae60' : '#3498db';
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 2500);
+                         }
         // App data
         let currentUser = null;
         let users = JSON.parse(localStorage.getItem('taskUsers')) || {};
         let tasks = JSON.parse(localStorage.getItem('taskItems')) || {};
+        // XP System
+        const XP_VALUES = {
+        easy: 20,
+        medium: 50,
+        hard: 100,
+        expert: 200
+        };
 
+        const LEVEL_XP = 1000; // XP needed per level
+
+        let userStatsData = JSON.parse(localStorage.getItem('userStats')) || {};
         // Register new user
         registerBtn.addEventListener('click', () => {
             const email = emailInput.value.trim();
@@ -339,7 +522,8 @@
         loginBtn.addEventListener('click', () => {
             const email = emailInput.value.trim();
             const password = passwordInput.value.trim();
-            
+            userStats.classList.remove('hidden');
+             initUserStats(email);
             if (!email || !password) {
                 alert('Please enter both email and password');
                 return;
@@ -364,6 +548,7 @@
             taskContainer.classList.add('hidden');
             emailInput.value = '';
             passwordInput.value = '';
+            userStats.classList.add('hidden');
         });
 
         // Add new task
@@ -376,10 +561,12 @@
             }
             
             const newTask = {
-                id: Date.now(),
-                text: taskText,
-                completed: false
-            };
+            id: Date.now(),
+            text: taskText,
+            difficulty: difficulty,
+            completed: false,
+            xpAwarded: false
+         };
             
             tasks[currentUser].push(newTask);
             localStorage.setItem('taskItems', JSON.stringify(tasks));
@@ -421,16 +608,24 @@
 
         // Toggle task completion
         function toggleTaskComplete(taskId) {
-            tasks[currentUser] = tasks[currentUser].map(task => {
-                if (task.id === taskId) {
-                    return { ...task, completed: !task.completed };
-                }
-                return task;
-            });
-            
-            localStorage.setItem('taskItems', JSON.stringify(tasks));
-            renderTasks();
+    const task = tasks[currentUser].find(t => t.id === taskId);
+    
+    if (task && !task.completed && !task.xpAwarded) {
+        // Award XP when completing a task for the first time
+        addXP(task.difficulty);
+        task.xpAwarded = true;
+    }
+    
+    tasks[currentUser] = tasks[currentUser].map(task => {
+        if (task.id === taskId) {
+            return { ...task, completed: !task.completed };
         }
+        return task;
+    });
+    
+    localStorage.setItem('taskItems', JSON.stringify(tasks));
+    renderTasks();
+}
 
         // Delete task
         function deleteTask(taskId) {
