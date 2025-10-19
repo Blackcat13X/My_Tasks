@@ -616,20 +616,16 @@ function showNotification(message, type) {
 
         // Toggle task completion
         function toggleTaskComplete(taskId) {
-    const taskIndex = tasks[currentUser].findIndex(t => t.id === taskId);
-    const task = tasks[currentUser][taskIndex];
+    const task = tasks[currentUser].find(t => t.id === taskId);
     
     if (task && !task.completed && !task.xpAwarded) {
-        // Award XP حسب الصعوبة
-        addXP(task.difficulty);
+        if (task.difficulty === 'easy') addXP(20);
+        if (task.difficulty === 'medium') addXP(50);
+        if (task.difficulty === 'hard') addXP(100);
+        if (task.difficulty === 'expert') addXP(200);
         task.xpAwarded = true;
-        
-        // Update the task in the array
-        tasks[currentUser][taskIndex] = task;
-        localStorage.setItem('taskItems', JSON.stringify(tasks));
     }
     
-    // Toggle completion status
     tasks[currentUser] = tasks[currentUser].map(task => {
         if (task.id === taskId) {
             return { ...task, completed: !task.completed };
