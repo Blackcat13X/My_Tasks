@@ -537,6 +537,8 @@ function showNotification(message, type) {
             currentUser = email;
             authContainer.classList.add('hidden');
             taskContainer.classList.remove('hidden');
+            useStats.classlist.remove('hidden');
+            initUserStats(email);
             
             renderTasks();
         });
