@@ -616,14 +616,20 @@ function showNotification(message, type) {
 
         // Toggle task completion
         function toggleTaskComplete(taskId) {
-    const task = tasks[currentUser].find(t => t.id === taskId);
+    const taskIndex = tasks[currentUser].findIndex(t => t.id === taskId);
+    const task = tasks[currentUser][taskIndex];
     
     if (task && !task.completed && !task.xpAwarded) {
-        // Award XP when completing a task for the first time
+        // Award XP حسب الصعوبة
         addXP(task.difficulty);
         task.xpAwarded = true;
+        
+        // Update the task in the array
+        tasks[currentUser][taskIndex] = task;
+        localStorage.setItem('taskItems', JSON.stringify(tasks));
     }
     
+    // Toggle completion status
     tasks[currentUser] = tasks[currentUser].map(task => {
         if (task.id === taskId) {
             return { ...task, completed: !task.completed };
@@ -648,6 +654,17 @@ function showNotification(message, type) {
                 addTaskBtn.click();
             }
         });
+        window.addEventListener('load', function() {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser && users[savedUser]) {
+        currentUser = savedUser;
+        authContainer.classList.add('hidden');
+        taskContainer.classList.remove('hidden');
+        userStats.classList.remove('hidden');
+        initUserStats(savedUser);
+        renderTasks();
+    }
+});
     </script>
 </body>
     </html>
