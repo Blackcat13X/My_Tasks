@@ -539,6 +539,7 @@ function showNotification(message, type) {
             taskContainer.classList.remove('hidden');
             useStats.classlist.remove('hidden');
             initUserStats(email);
+            console.log('Login successful - Showing task container');
             
             renderTasks();
         });
